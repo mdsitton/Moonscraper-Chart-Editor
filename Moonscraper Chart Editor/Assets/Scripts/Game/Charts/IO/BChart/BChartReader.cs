@@ -6,6 +6,7 @@ using System.Text;
 using BinaryEx;
 using MoonscraperChartEditor.Song;
 using MoonscraperChartEditor.Song.IO;
+using UnityEngine;
 using static MoonscraperChartEditor.Song.Song;
 
 namespace MoonscraperChartEditor.Song.IO
@@ -62,14 +63,16 @@ namespace MoonscraperChartEditor.Song.IO
 
         public static BPM ReadTempoData(Span<byte> data, uint tickPos)
         {
-            return new BPM(tickPos, (uint)(60000000000.0 / data.ReadUInt32LE(0)));
+            uint tempo = data.ReadUInt32LE(0);
+            uint bpm = (uint)(60000000000.0 / tempo);
+            return new BPM(tickPos, bpm);
         }
 
         public static TimeSignature ReadTSData(Span<byte> data, uint tickPos)
         {
             int pos = 0;
-            var num = data.ReadUInt32LE(ref pos);
-            var den = data.ReadUInt32LE(ref pos);
+            var num = data.ReadByte(ref pos);
+            var den = data.ReadByte(ref pos);
 
             return new TimeSignature(tickPos, num, den);
         }
@@ -198,7 +201,6 @@ namespace MoonscraperChartEditor.Song.IO
                 }
             }
             chart.UpdateCache();
-            Console.WriteLine(chart.note_count);
         }
 
         public static (Instrument inst, byte count) ReadInstrument(Span<byte> data)
