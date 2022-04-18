@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2016-2020 Alexander Ong
+// Copyright (c) 2016-2020 Alexander Ong
 // See LICENSE in project root for license information.
 
 using System.Collections;
@@ -12,7 +12,8 @@ using MoonscraperEngine.Audio;
 using MoonscraperChartEditor.Song;
 using MoonscraperChartEditor.Song.IO;
 
-public class Export : DisplayMenu {
+public class Export : DisplayMenu
+{
     public Text exportingInfo;
     public Dropdown fileTypeDropdown;
     public Toggle chPackageToggle;
@@ -30,6 +31,7 @@ public class Export : DisplayMenu {
     float delayTime = 0;
 
     const string FILE_EXT_CHART = ".chart";
+    const string FILE_EXT_BCHART = ".bch";
     const string FILE_EXT_MIDI = ".mid";
     readonly string[] COPY_IF_EXTENTION = { ".opus" };
 
@@ -86,11 +88,9 @@ public class Export : DisplayMenu {
         if (enabled)
         {
             generateIniToggle.isOn = enabled;
-            fileTypeDropdown.value = 0;
         }
 
-        generateIniToggle.interactable = !enabled;        
-        fileTypeDropdown.interactable = !enabled;
+        generateIniToggle.interactable = !enabled;
         magmaButton.interactable = !enabled;
         exportingInfo.text = chPackageToggle.isOn ? chPackageText : chartInfoText;
     }
@@ -128,6 +128,10 @@ public class Export : DisplayMenu {
         else if (exportOptions.format == ExportOptions.Format.Midi)
         {
             aquiredFilePath = FileExplorer.SaveFilePanel(new ExtensionFilter("Midi files", "mid"), defaultFileName, "mid", out saveLocation);
+        }
+        else if (exportOptions.format == ExportOptions.Format.BChart)
+        {
+            aquiredFilePath = FileExplorer.SaveFilePanel(new ExtensionFilter("BChart files", "bch"), defaultFileName, "bch", out saveLocation);
         }
         else
             throw new Exception("Invalid file extension");
@@ -174,42 +178,64 @@ public class Export : DisplayMenu {
         float timer = Time.realtimeSinceStartup;
         string errorMessageList = string.Empty;
 
-        List<LoadingTask> tasks = new List<LoadingTask>()
+        Action saveTask = null;
+
+        if (exportOptions.format == ExportOptions.Format.Chart)
         {
-            new LoadingTask("Exporting " + exportOptions.format, () =>
+            saveTask = () =>
             {
-                if (exportOptions.format == ExportOptions.Format.Chart)
+                try
                 {
-                    try
-                    {
-                        ChartWriter.ErrorReport errorReport;
+                    ChartWriter.ErrorReport errorReport;
 
-                        Debug.Log("Exporting CHART file to " + filepath);
-                        new ChartWriter(filepath).Write(song, exportOptions, out errorReport);
+                    Debug.Log("Exporting CHART file to " + filepath);
+                    new ChartWriter(filepath).Write(song, exportOptions, out errorReport);
 
-                        errorMessageList = errorReport.errorList.ToString();
-                    }
-                    catch (System.Exception e)
-                    {
-                        Logger.LogException(e, "Error when exporting chart");
-                        errorMessageList += e.Message;
-                    }
+                    errorMessageList = errorReport.errorList.ToString();
                 }
-                else if (exportOptions.format == ExportOptions.Format.Midi)
+                catch (System.Exception e)
                 {
-                    try
-                    {
-                        Debug.Log("Exporting MIDI file to " + filepath);
-                        MidWriter.WriteToFile(filepath, song, exportOptions);
-                    }
-                    catch (System.Exception e)
-                    {
-                        Logger.LogException(e, "Error when exporting midi");
-                        errorMessageList += e.Message;
-                    }
+                    Logger.LogException(e, "Error when exporting chart");
+                    errorMessageList += e.Message;
                 }
-            })
-        };
+            };
+        }
+        else if (exportOptions.format == ExportOptions.Format.Midi)
+        {
+            saveTask = () =>
+            {
+                try
+                {
+                    Debug.Log("Exporting MIDI file to " + filepath);
+                    MidWriter.WriteToFile(filepath, song, exportOptions);
+                }
+                catch (System.Exception e)
+                {
+                    Logger.LogException(e, "Error when exporting midi");
+                    errorMessageList += e.Message;
+                }
+            };
+        }
+        else if (exportOptions.format == ExportOptions.Format.BChart)
+        {
+            saveTask = () =>
+            {
+                try
+                {
+                    Debug.Log("Exporting BChart file to " + filepath);
+                    BChartWriter.WriteToFile(filepath, song);
+                }
+                catch (System.Exception e)
+                {
+                    Logger.LogException(e, "Error when exporting BChart");
+                    errorMessageList += e.Message;
+                }
+            };
+        }
+
+        List<LoadingTask> tasks = new List<LoadingTask>();
+
+        tasks.Add(new LoadingTask("Exporting " + exportOptions.format, saveTask));
 
         if (generateIniToggle.isOn)
         {
@@ -263,6 +289,9 @@ public class Export : DisplayMenu {
             case 1:
                 setAsMidFile();
                 break;
+            case 2:
+                setAsBChartFile();
+                break;
             case 0:
             default:
                 setAsChartFile();
@@ -282,6 +311,13 @@ public class Export : DisplayMenu {
         exportOptions.format = ExportOptions.Format.Midi;
         exportingInfo.text = midInfoText;
         midiSettings.gameObject.SetActive(true);
+    }
+
+    void setAsBChartFile()
+    {
+        exportOptions.format = ExportOptions.Format.BChart;
+        exportingInfo.text = chPackageToggle.isOn ? chPackageText : chartInfoText;
+        midiSettings.gameObject.SetActive(false);
     }
 
     public void SetTrackEventDifficulty(int value)
@@ -501,7 +537,7 @@ public class Export : DisplayMenu {
                     Debug.LogFormat("Unable to re-encode file, copying {0} to {1}", audioLocation, destPath);
                     File.Copy(audioLocation, destPath, true);
                 }
-            });         
+            });
         }
 
         for (int i = 0; i < songEncodeActions.Count; ++i)
@@ -511,7 +547,6 @@ public class Export : DisplayMenu {
 
         tasks.Add(new LoadingTask("Exporting chart", () =>
         {
-            string chartOutputFile = Path.Combine(destFolderPath, "notes.chart");
 
             // Set audio location after audio files have already been created as set won't won't if the files don't exist
             foreach (Song.AudioInstrument audio in EnumX<Song.AudioInstrument>.Values)
@@ -524,12 +559,53 @@ public class Export : DisplayMenu {
                 }
             }
 
-            ChartWriter.ErrorReport errorReport;
+            if (exportOptions.format == ExportOptions.Format.Chart)
+            {
+                try
+                {
+                    ChartWriter.ErrorReport errorReport;
+                    string chartOutputFile = Path.Combine(destFolderPath, "notes.chart");
 
-            new ChartWriter(chartOutputFile).Write(newSong, exportOptions, out errorReport);
+                    Debug.Log("Exporting CHART file to " + chartOutputFile);
+                    new ChartWriter(chartOutputFile).Write(newSong, exportOptions, out errorReport);
+
+                    errorMessageList = errorReport.errorList.ToString();
+                }
+                catch (System.Exception e)
+                {
+                    Logger.LogException(e, "Error when exporting chart");
+                    errorMessageList += e.Message;
+                }
+            }
+            else if (exportOptions.format == ExportOptions.Format.Midi)
+            {
+                try
+                {
+                    string chartOutputFile = Path.Combine(destFolderPath, "notes.mid");
+                    Debug.Log("Exporting MIDI file to " + chartOutputFile);
+                    MidWriter.WriteToFile(chartOutputFile, newSong, exportOptions);
+                }
+                catch (System.Exception e)
+                {
+                    Logger.LogException(e, "Error when exporting midi");
+                    errorMessageList += e.Message;
+                }
+            }
+            else if (exportOptions.format == ExportOptions.Format.BChart)
+            {
+                try
+                {
+                    string chartOutputFile = Path.Combine(destFolderPath, "notes.bch");
+                    Debug.Log("Exporting BChart file to " + chartOutputFile);
+                    BChartWriter.WriteToFile(chartOutputFile, newSong);
+                }
+                catch (System.Exception e)
+                {
+                    Logger.LogException(e, "Error when exporting BChart");
+                    errorMessageList += e.Message;
+                }
+            }
             GenerateSongIni(destFolderPath, newSong, songLengthSeconds, true);
-
-            errorMessageList = errorReport.errorList.ToString();
         }));
 
         tasksManager.KickTasks(tasks);

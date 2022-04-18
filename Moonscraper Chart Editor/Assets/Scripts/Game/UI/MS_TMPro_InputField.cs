@@ -1,4 +1,4 @@
-﻿//#define TMP_DEBUG_MODE
+//#define TMP_DEBUG_MODE
 
 using System;
 using System.Collections;
@@ -1016,7 +1016,7 @@ public class MS_TMPro_InputField : Selectable,
             // Cache reference to Vertical Scrollbar RectTransform and add listener.
             if (m_VerticalScrollbar != null)
             {
-                m_TextComponent.ignoreRectMaskCulling = true;
+                // m_TextComponent.ignoreRectMaskCulling = true;
                 m_VerticalScrollbar.onValueChanged.AddListener(OnScrollbarValueChange);
             }
 

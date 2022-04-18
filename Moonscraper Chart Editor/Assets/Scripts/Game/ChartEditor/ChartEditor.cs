@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2016-2020 Alexander Ong
+// Copyright (c) 2016-2020 Alexander Ong
 // See LICENSE in project root for license information.
 
 #define TIMING_DEBUG
@@ -145,7 +145,7 @@ public class ChartEditor : UnitySingleton<ChartEditor>
     [HideInInspector]
     public ChartEditorSessionFlags sessionFlags = ChartEditorSessionFlags.None;
 
-    readonly string[] ValidFileExtentions = new string[] { "chart", "mid", "msce" };
+    readonly string[] ValidFileExtentions = new string[] { "chart", "mid", "bch", "msce" };
 
     // Use this for initialization
     void Awake () {
@@ -718,6 +718,7 @@ public class ChartEditor : UnitySingleton<ChartEditor>
         float totalLoadTime = Time.realtimeSinceStartup;
 #endif
         bool mid = false;
+        bool bch = false;
 
         Song newSong = null;
         MidReader.CallbackState midiCallbackState = MidReader.CallbackState.None;
@@ -736,11 +737,14 @@ public class ChartEditor : UnitySingleton<ChartEditor>
                 }
 
                 mid = System.IO.Path.GetExtension(currentFileName) == ".mid";
+                bch = System.IO.Path.GetExtension(currentFileName) == ".bch";
 
                 try
                 {
                     if (mid)
                         newSong = MidReader.ReadMidi(currentFileName, ref midiCallbackState);
+                    else if (bch)
+                        newSong = BChartReader.ReadBChart(currentFileName);
                     else
                         newSong = ChartReader.ReadChart(currentFileName);
                 }
@@ -750,6 +754,8 @@ public class ChartEditor : UnitySingleton<ChartEditor>
 
                     if (mid)
                         errorManager.QueueErrorMessage(Logger.LogException(e, "Failed to open mid file"));
+                    else if (bch)
+                        errorManager.QueueErrorMessage(Logger.LogException(e, "Failed to open bchart file"));
                     else
                         errorManager.QueueErrorMessage(Logger.LogException(e, "Failed to open chart file"));
 

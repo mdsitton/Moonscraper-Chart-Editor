@@ -20,29 +20,22 @@ namespace MoonscraperChartEditor.Song.IO
         }
 
         static readonly Dictionary<string, Song.Instrument> c_trackNameToInstrumentMap = new Dictionary<string, Song.Instrument>()
-    {
-        { MidIOHelper.GUITAR_TRACK,        Song.Instrument.Guitar },
-        { MidIOHelper.GUITAR_COOP_TRACK,   Song.Instrument.GuitarCoop },
-        { MidIOHelper.BASS_TRACK,          Song.Instrument.Bass },
-        { MidIOHelper.RHYTHM_TRACK,        Song.Instrument.Rhythm },
-        { MidIOHelper.KEYS_TRACK,          Song.Instrument.Keys },
-        { MidIOHelper.DRUMS_TRACK,         Song.Instrument.Drums },
-        { MidIOHelper.GHL_GUITAR_TRACK,    Song.Instrument.GHLiveGuitar },
-        { MidIOHelper.GHL_BASS_TRACK,      Song.Instrument.GHLiveBass },
-    };
+        {
+            { MidIOHelper.GUITAR_TRACK,        Song.Instrument.Guitar },
+            { MidIOHelper.GUITAR_COOP_TRACK,   Song.Instrument.GuitarCoop },
+            { MidIOHelper.BASS_TRACK,          Song.Instrument.Bass },
+            { MidIOHelper.RHYTHM_TRACK,        Song.Instrument.Rhythm },
+            { MidIOHelper.KEYS_TRACK,          Song.Instrument.Keys },
+            { MidIOHelper.DRUMS_TRACK,         Song.Instrument.Drums },
+            { MidIOHelper.GHL_GUITAR_TRACK,    Song.Instrument.GHLiveGuitar },
+            { MidIOHelper.GHL_BASS_TRACK,      Song.Instrument.GHLiveBass },
+        };
 
         static readonly Dictionary<string, bool> c_trackExcludesMap = new Dictionary<string, bool>()
-    {
-        { "t1 gems",    true },
-        { "beat",       true }
-    };
-
-        static readonly Dictionary<Song.AudioInstrument, string[]> c_audioStreamLocationOverrideDict = new Dictionary<Song.AudioInstrument, string[]>()
-    {
-        // String list is ordered in priority. If it finds a file names with the first string it'll skip over the rest.
-        // Otherwise just does a ToString on the AudioInstrument enum
-        { Song.AudioInstrument.Drum, new string[] { "drums", "drums_1" } },
-    };
+        {
+            { "t1 gems",    true },
+            { "beat",       true }
+        };
 
         struct NoteProcessParams
         {
@@ -57,37 +50,37 @@ namespace MoonscraperChartEditor.Song.IO
 
         // These dictionaries map the NoteNumber of each midi note event to a specific function of how to process them
         static readonly Dictionary<int, NoteEventProcessFn> GuitarMidiNoteNumberToProcessFnMap = new Dictionary<int, NoteEventProcessFn>()
-    {
-        { MidIOHelper.STARPOWER_NOTE, ProcessNoteOnEventAsStarpower },
-        { MidIOHelper.SOLO_NOTE, (in NoteProcessParams noteProcessParams) => {
-            ProcessNoteOnEventAsEvent(noteProcessParams, MidIOHelper.SoloEventText, MidIOHelper.SoloEndEventText);
-        }},
-    };
+        {
+            { MidIOHelper.STARPOWER_NOTE, ProcessNoteOnEventAsStarpower },
+            { MidIOHelper.SOLO_NOTE, (in NoteProcessParams noteProcessParams) => {
+                ProcessNoteOnEventAsEvent(noteProcessParams, MidIOHelper.SoloEventText, MidIOHelper.SoloEndEventText);
+            }},
+        };
 
         static readonly Dictionary<int, NoteEventProcessFn> GhlGuitarMidiNoteNumberToProcessFnMap = new Dictionary<int, NoteEventProcessFn>()
-    {
-        { MidIOHelper.STARPOWER_NOTE, ProcessNoteOnEventAsStarpower },
-        { MidIOHelper.SOLO_NOTE, (in NoteProcessParams noteProcessParams) => {
-            ProcessNoteOnEventAsEvent(noteProcessParams, MidIOHelper.SoloEventText, MidIOHelper.SoloEndEventText);
-        }},
-    };
+        {
+            { MidIOHelper.STARPOWER_NOTE, ProcessNoteOnEventAsStarpower },
+            { MidIOHelper.SOLO_NOTE, (in NoteProcessParams noteProcessParams) => {
+                ProcessNoteOnEventAsEvent(noteProcessParams, MidIOHelper.SoloEventText, MidIOHelper.SoloEndEventText);
+            }},
+        };
 
         static readonly Dictionary<int, NoteEventProcessFn> DrumsMidiNoteNumberToProcessFnMap = new Dictionary<int, NoteEventProcessFn>()
-    {
-        { MidIOHelper.STARPOWER_NOTE, ProcessNoteOnEventAsStarpower },
-        { MidIOHelper.SOLO_NOTE, (in NoteProcessParams noteProcessParams) => {
-            ProcessNoteOnEventAsEvent(noteProcessParams, MidIOHelper.SoloEventText, MidIOHelper.SoloEndEventText);
-        }},
-        { MidIOHelper.DOUBLE_KICK_NOTE, (in NoteProcessParams noteProcessParams) => {
-            ProcessNoteOnEventAsNote(noteProcessParams, Song.Difficulty.Expert, (int)Note.DrumPad.Kick, Note.Flags.InstrumentPlus);
-        }},
+        {
+            { MidIOHelper.STARPOWER_NOTE, ProcessNoteOnEventAsStarpower },
+            { MidIOHelper.SOLO_NOTE, (in NoteProcessParams noteProcessParams) => {
+                ProcessNoteOnEventAsEvent(noteProcessParams, MidIOHelper.SoloEventText, MidIOHelper.SoloEndEventText);
+            }},
+            { MidIOHelper.DOUBLE_KICK_NOTE, (in NoteProcessParams noteProcessParams) => {
+                ProcessNoteOnEventAsNote(noteProcessParams, Song.Difficulty.Expert, (int)Note.DrumPad.Kick, Note.Flags.InstrumentPlus);
+            }},
 
-        { MidIOHelper.STARPOWER_DRUM_FILL_0, ProcessNoteOnEventAsDrumFill },
-        { MidIOHelper.STARPOWER_DRUM_FILL_1, ProcessNoteOnEventAsDrumFill },
-        { MidIOHelper.STARPOWER_DRUM_FILL_2, ProcessNoteOnEventAsDrumFill },
-        { MidIOHelper.STARPOWER_DRUM_FILL_3, ProcessNoteOnEventAsDrumFill },
-        { MidIOHelper.STARPOWER_DRUM_FILL_4, ProcessNoteOnEventAsDrumFill },
-    };
+            { MidIOHelper.STARPOWER_DRUM_FILL_0, ProcessNoteOnEventAsDrumFill },
+            { MidIOHelper.STARPOWER_DRUM_FILL_1, ProcessNoteOnEventAsDrumFill },
+            { MidIOHelper.STARPOWER_DRUM_FILL_2, ProcessNoteOnEventAsDrumFill },
+            { MidIOHelper.STARPOWER_DRUM_FILL_3, ProcessNoteOnEventAsDrumFill },
+            { MidIOHelper.STARPOWER_DRUM_FILL_4, ProcessNoteOnEventAsDrumFill },
+        };
 
         static MidReader()
         {
@@ -101,41 +94,7 @@ namespace MoonscraperChartEditor.Song.IO
             Song song = new Song();
             string directory = Path.GetDirectoryName(path);
 
-            foreach (Song.AudioInstrument audio in EnumX<Song.AudioInstrument>.Values)
-            {
-                // First try any specific filenames for the instrument, then try the instrument name
-                List<string> filenamesToTry = new List<string>();
-
-                if (c_audioStreamLocationOverrideDict.ContainsKey(audio)) {
-                    filenamesToTry.AddRange(c_audioStreamLocationOverrideDict[audio]);
-                }
-
-                filenamesToTry.Add(audio.ToString());
-
-                // Search for each combination of filenamesToTry + audio extension until we find a file
-                string audioFilepath = null;
-
-                foreach (string testFilename in filenamesToTry)
-                {
-                    foreach (string extension in Globals.validAudioExtensions) {
-                        string testFilepath = Path.Combine(directory, testFilename.ToLower() + extension);
-
-                        if (File.Exists(testFilepath))
-                        {
-                            audioFilepath = testFilepath;
-                            break;
-                        }
-                    }
-                }
-
-                // If we didn't find a file, assign a default value to the audio path
-                if (audioFilepath == null) {
-                    audioFilepath = Path.Combine(directory, audio.ToString().ToLower() + ".ogg");
-                }
-
-                Debug.Log(audioFilepath);
-                song.SetAudioLocation(audio, audioFilepath);
-            }
+            MsceIOHelper.DiscoverAudio(directory, song);
 
             MidiFile midi;
 
@@ -625,8 +584,8 @@ namespace MoonscraperChartEditor.Song.IO
                     }
                 }
 
-            // Process forced hopo or forced strum
-            {
+                // Process forced hopo or forced strum
+                {
                     int flagKey = difficultyStartRange + 5;
                     GuitarMidiNoteNumberToProcessFnMap.Add(flagKey, (in NoteProcessParams noteProcessParams) =>
                     {
@@ -683,8 +642,8 @@ namespace MoonscraperChartEditor.Song.IO
                     }
                 }
 
-            // Process forced hopo or forced strum
-            {
+                // Process forced hopo or forced strum
+                {
                     int flagKey = difficultyStartRange + 7;
                     GhlGuitarMidiNoteNumberToProcessFnMap.Add(flagKey, (in NoteProcessParams noteProcessParams) =>
                     {

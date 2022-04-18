@@ -28,10 +28,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System;
-using Ookii.Dialogs;
 using System.IO;
 
 public class FileExplorerWindows_gkngkc : IFileExplorer
@@ -39,62 +37,71 @@ public class FileExplorerWindows_gkngkc : IFileExplorer
     [DllImport("user32.dll")]
     private static extern IntPtr GetActiveWindow();
 
-    public class WindowWrapper : IWin32Window
-    {
-        private IntPtr _hwnd;
-        public WindowWrapper(IntPtr handle) { _hwnd = handle; }
-        public IntPtr Handle { get { return _hwnd; } }
-    }
-
     public bool OpenFilePanel(ExtensionFilter filter, string defExt, out string resultPath)
     {
-        var fd = new VistaOpenFileDialog();
-        fd.Title = "Open file";
-        fd.Filter = GetFilterFromFileExtensionList(filter);
-        fd.FilterIndex = 1;
-        fd.Multiselect = false;
+        var dlg = new FolderPicker();
+        if (dlg.ShowDialog(GetActiveWindow()) == true)
+        {
+            resultPath = dlg.ResultPath;
+        }
+        else
+        {
 
-        var res = fd.ShowDialog(new WindowWrapper(GetActiveWindow()));
-        var filename = res == DialogResult.OK ? fd.FileNames[0] : string.Empty;
-        fd.Dispose();
+            resultPath = string.Empty;
+        }
 
-        resultPath = filename;
+        // var fd = new VistaOpenFileDialog();
+        // fd.Title = "Open file";
+        // fd.Filter = GetFilterFromFileExtensionList(filter);
+        // fd.FilterIndex = 1;
+        // fd.Multiselect = false;
+
+        // var res = fd.ShowDialog(new WindowWrapper(GetActiveWindow()));
+        // var filename = res == DialogResult.OK ? fd.FileNames[0] : string.Empty;
+        // fd.Dispose();
+
         return !string.IsNullOrEmpty(resultPath);
     }
 
     public bool SaveFilePanel(ExtensionFilter filter, string defaultFileName, string defExt, out string resultPath)
     {
-        var fd = new VistaSaveFileDialog();
-        fd.Title = "Save As";
+        // var fd = new VistaSaveFileDialog();
+        // fd.Title = "Save As";
 
-        var finalFilename = "";
+        // var finalFilename = "";
 
-        if (!string.IsNullOrEmpty(defaultFileName))
-        {
-            finalFilename += defaultFileName;
-        }
+        // if (!string.IsNullOrEmpty(defaultFileName))
+        // {
+        //     finalFilename += defaultFileName;
+        // }
 
-        fd.FileName = finalFilename;
-        fd.Filter = GetFilterFromFileExtensionList(filter);
-        fd.FilterIndex = 1;
-        fd.DefaultExt = defExt;
-        fd.AddExtension = true;
+        // fd.FileName = finalFilename;
+        // fd.Filter = GetFilterFromFileExtensionList(filter);
+        // fd.FilterIndex = 1;
+        // fd.DefaultExt = defExt;
+        // fd.AddExtension = true;
 
-        var res = fd.ShowDialog(new WindowWrapper(GetActiveWindow()));
-        var filename = res == DialogResult.OK ? fd.FileName : string.Empty;
-        fd.Dispose();
-        resultPath = filename;
+        // var res = fd.ShowDialog(new WindowWrapper(GetActiveWindow()));
+        // var filename = res == DialogResult.OK ? fd.FileName : string.Empty;
+        // fd.Dispose();
+        resultPath = String.Empty;
 
         return !string.IsNullOrEmpty(resultPath);
     }
 
     public bool OpenFolderPanel(out string resultPath)
     {
-        var fd = new VistaFolderBrowserDialog();
-        var res = fd.ShowDialog(new WindowWrapper(GetActiveWindow()));
-        var filename = res == DialogResult.OK ? fd.SelectedPath : string.Empty;
-        fd.Dispose();
-        resultPath = filename;
+
+        var dlg = new FolderPicker();
+        if (dlg.ShowDialog(GetActiveWindow()) == true)
+        {
+            resultPath = dlg.ResultPath;
+        }
+        else
+        {
+
+            resultPath = string.Empty;
+        }
 
         return !string.IsNullOrEmpty(resultPath);
     }
