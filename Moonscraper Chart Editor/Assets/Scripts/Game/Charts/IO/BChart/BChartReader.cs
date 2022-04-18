@@ -158,11 +158,23 @@ namespace MoonscraperChartEditor.Song.IO
             int pos = 0;
             int eventCount = data.ReadInt32LE(ref pos);
             Difficulty diff = (Difficulty)data.ReadByte(ref pos);
+            List<ChartEvent> soloEndEvents = new List<ChartEvent>();
             Console.WriteLine($"{inst} {diff}");
             var chart = song.GetChart(inst, diff);
             for (int i = 0; i < eventCount; ++i)
             {
                 (uint tickPos, byte eventType) = ReadEventBytes(data, ref pos, out Span<byte> dataSpan);
+
+
+                for (int j = 0; j < soloEndEvents.Count; ++j)
+                {
+                    var end = soloEndEvents[j];
+                    if (tickPos > end.tick)
+                    {
+                        chart.Add(end, false);
+                        soloEndEvents.RemoveAt(j--);
+                    }
+                }
 
                 switch (eventType)
                 {
@@ -182,12 +194,12 @@ namespace MoonscraperChartEditor.Song.IO
                             }
                             else if (type == BChartConsts.PHRASE_SOLO)
                             {
-
                                 uint length = ReadPhraseLength(dataSpan);
                                 var start = new ChartEvent(tickPos, MidIOHelper.SoloEventText);
                                 var end = new ChartEvent(tickPos + length, MidIOHelper.SoloEndEventText);
+                                soloEndEvents.Add(end);
                                 chart.Add(start, false);
-                                chart.Add(end, false);
+                                // chart.Add(end, false);
                             }
                             break;
                         }
