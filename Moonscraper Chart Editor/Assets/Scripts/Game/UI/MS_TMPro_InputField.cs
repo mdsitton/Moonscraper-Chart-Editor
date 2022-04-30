@@ -961,104 +961,104 @@ public class MS_TMPro_InputField : Selectable,
             SetCaretActive();
     }
 #endif
-
-    protected override void OnEnable()
-    {
-        //Debug.Log("*** OnEnable() *** - " + this.name);
-
-        base.OnEnable();
-
-        if (m_Text == null)
-            m_Text = string.Empty;
-
-        if (Application.isPlaying)
-        {
-            if (m_CachedInputRenderer == null && m_TextComponent != null)
-            {
-                // Check if Input Field is driven by any layout components
-                m_IsDrivenByLayoutComponents = GetComponent<ILayoutController>() != null ? true : false;
-
-                GameObject go = new GameObject(transform.name + " Input Caret", typeof(RectTransform));
-
-                // Add MaskableGraphic Component
-                TMP_SelectionCaret caret = go.AddComponent<TMP_SelectionCaret>();
-                caret.raycastTarget = false;
-                caret.color = Color.clear;
-
-                go.hideFlags = HideFlags.DontSave;
-                go.transform.SetParent(m_TextComponent.transform.parent);
-                go.transform.SetAsFirstSibling();
-                go.layer = gameObject.layer;
-
-                caretRectTrans = go.GetComponent<RectTransform>();
-                m_CachedInputRenderer = go.GetComponent<CanvasRenderer>();
-                m_CachedInputRenderer.SetMaterial(Graphic.defaultGraphicMaterial, Texture2D.whiteTexture);
-
-                // Needed as if any layout is present we want the caret to always be the same as the text area.
-                go.AddComponent<LayoutElement>().ignoreLayout = true;
-
-                AssignPositioningIfNeeded();
-            }
-        }
-
-        // If we have a cached renderer then we had OnDisable called so just restore the material.
-        if (m_CachedInputRenderer != null)
-            m_CachedInputRenderer.SetMaterial(Graphic.defaultGraphicMaterial, Texture2D.whiteTexture);
-
-        if (m_TextComponent != null)
-        {
-            m_TextComponent.RegisterDirtyVerticesCallback(MarkGeometryAsDirty);
-            m_TextComponent.RegisterDirtyVerticesCallback(UpdateLabel);
-            //m_TextComponent.ignoreRectMaskCulling = multiLine;
-
-            //m_DefaultTransformPosition = m_TextComponent.rectTransform.localPosition;
-
-            // Cache reference to Vertical Scrollbar RectTransform and add listener.
-            if (m_VerticalScrollbar != null)
-            {
-                // m_TextComponent.ignoreRectMaskCulling = true;
-                m_VerticalScrollbar.onValueChanged.AddListener(OnScrollbarValueChange);
-            }
-
-            UpdateLabel();
-        }
-
-        // Subscribe to event fired when text object has been regenerated.
-        TMPro_EventManager.TEXT_CHANGED_EVENT.Add(ON_TEXT_CHANGED);
-    }
-
-    protected override void OnDisable()
-    {
-        // the coroutine will be terminated, so this will ensure it restarts when we are next activated
-        m_BlinkCoroutine = null;
-
-        DeactivateInputField();
-        if (m_TextComponent != null)
-        {
-            m_TextComponent.UnregisterDirtyVerticesCallback(MarkGeometryAsDirty);
-            m_TextComponent.UnregisterDirtyVerticesCallback(UpdateLabel);
-
-            if (m_VerticalScrollbar != null)
-                m_VerticalScrollbar.onValueChanged.RemoveListener(OnScrollbarValueChange);
-
-        }
-        CanvasUpdateRegistry.UnRegisterCanvasElementForRebuild(this);
-
-        // Clear needs to be called otherwise sync never happens as the object is disabled.
-        if (m_CachedInputRenderer != null)
-            m_CachedInputRenderer.Clear();
-
-        if (m_Mesh != null)
-            DestroyImmediate(m_Mesh);
-        m_Mesh = null;
-
-        // Unsubscribe to event triggered when text object has been regenerated
-        TMPro_EventManager.TEXT_CHANGED_EVENT.Remove(ON_TEXT_CHANGED);
-
-        base.OnDisable();
-    }
-
-
+
+    protected override void OnEnable()
+    {
+        //Debug.Log("*** OnEnable() *** - " + this.name);
+
+        base.OnEnable();
+
+        if (m_Text == null)
+            m_Text = string.Empty;
+
+        if (Application.isPlaying)
+        {
+            if (m_CachedInputRenderer == null && m_TextComponent != null)
+            {
+                // Check if Input Field is driven by any layout components
+                m_IsDrivenByLayoutComponents = GetComponent<ILayoutController>() != null ? true : false;
+
+                GameObject go = new GameObject(transform.name + " Input Caret", typeof(RectTransform));
+
+                // Add MaskableGraphic Component
+                TMP_SelectionCaret caret = go.AddComponent<TMP_SelectionCaret>();
+                caret.raycastTarget = false;
+                caret.color = Color.clear;
+
+                go.hideFlags = HideFlags.DontSave;
+                go.transform.SetParent(m_TextComponent.transform.parent);
+                go.transform.SetAsFirstSibling();
+                go.layer = gameObject.layer;
+
+                caretRectTrans = go.GetComponent<RectTransform>();
+                m_CachedInputRenderer = go.GetComponent<CanvasRenderer>();
+                m_CachedInputRenderer.SetMaterial(Graphic.defaultGraphicMaterial, Texture2D.whiteTexture);
+
+                // Needed as if any layout is present we want the caret to always be the same as the text area.
+                go.AddComponent<LayoutElement>().ignoreLayout = true;
+
+                AssignPositioningIfNeeded();
+            }
+        }
+
+        // If we have a cached renderer then we had OnDisable called so just restore the material.
+        if (m_CachedInputRenderer != null)
+            m_CachedInputRenderer.SetMaterial(Graphic.defaultGraphicMaterial, Texture2D.whiteTexture);
+
+        if (m_TextComponent != null)
+        {
+            m_TextComponent.RegisterDirtyVerticesCallback(MarkGeometryAsDirty);
+            m_TextComponent.RegisterDirtyVerticesCallback(UpdateLabel);
+            //m_TextComponent.ignoreRectMaskCulling = multiLine;
+
+            //m_DefaultTransformPosition = m_TextComponent.rectTransform.localPosition;
+
+            // Cache reference to Vertical Scrollbar RectTransform and add listener.
+            if (m_VerticalScrollbar != null)
+            {
+                // m_TextComponent.ignoreRectMaskCulling = true;
+                m_VerticalScrollbar.onValueChanged.AddListener(OnScrollbarValueChange);
+            }
+
+            UpdateLabel();
+        }
+
+        // Subscribe to event fired when text object has been regenerated.
+        TMPro_EventManager.TEXT_CHANGED_EVENT.Add(ON_TEXT_CHANGED);
+    }
+
+    protected override void OnDisable()
+    {
+        // the coroutine will be terminated, so this will ensure it restarts when we are next activated
+        m_BlinkCoroutine = null;
+
+        DeactivateInputField();
+        if (m_TextComponent != null)
+        {
+            m_TextComponent.UnregisterDirtyVerticesCallback(MarkGeometryAsDirty);
+            m_TextComponent.UnregisterDirtyVerticesCallback(UpdateLabel);
+
+            if (m_VerticalScrollbar != null)
+                m_VerticalScrollbar.onValueChanged.RemoveListener(OnScrollbarValueChange);
+
+        }
+        CanvasUpdateRegistry.UnRegisterCanvasElementForRebuild(this);
+
+        // Clear needs to be called otherwise sync never happens as the object is disabled.
+        if (m_CachedInputRenderer != null)
+            m_CachedInputRenderer.Clear();
+
+        if (m_Mesh != null)
+            DestroyImmediate(m_Mesh);
+        m_Mesh = null;
+
+        // Unsubscribe to event triggered when text object has been regenerated
+        TMPro_EventManager.TEXT_CHANGED_EVENT.Remove(ON_TEXT_CHANGED);
+
+        base.OnDisable();
+    }
+
+
     /// <summary>
     /// Method used to update the tracking of the caret position when the text object has been regenerated.
     /// </summary>

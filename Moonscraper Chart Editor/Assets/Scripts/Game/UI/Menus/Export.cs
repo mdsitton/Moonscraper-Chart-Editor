@@ -320,10 +320,10 @@ public class Export : DisplayMenu
         midiSettings.gameObject.SetActive(false);
     }
 
-    public void SetTrackEventDifficulty(int value)
-    {
-        Song.Difficulty diff;
-
+    public void SetTrackEventDifficulty(int value)
+    {
+        Song.Difficulty diff;
+
         switch (value)
         {
             case 1:
