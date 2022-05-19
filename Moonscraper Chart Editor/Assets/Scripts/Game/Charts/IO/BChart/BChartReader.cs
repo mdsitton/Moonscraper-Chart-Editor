@@ -11,7 +11,6 @@ using static MoonscraperChartEditor.Song.Song;
 
 namespace MoonscraperChartEditor.Song.IO
 {
-
     public static class BChartReader
     {
         public static string ReadTextEventData(Span<byte> data)
@@ -60,15 +59,30 @@ namespace MoonscraperChartEditor.Song.IO
         }
 
 
-        public static (uint tickPos, byte eventType) ReadEventBytes(Span<byte> data, ref int pos, out Span<byte> eventSpanOut)
+        public static byte ReadEventBytes(Span<byte> data, ref int pos, out Span<byte> eventSpanOut, ref uint tickPos)
         {
-            uint tickPos = data.ReadUInt32LE(ref pos);
+            uint outData;
+            byte firstByte = data.ReadByte(ref pos);
+            switch (firstByte)
+            {
+                case 254:
+                    outData = data.ReadUInt16LE(ref pos);
+                    break;
+                case 255:
+                    outData = data.ReadUInt32LE(ref pos);
+                    break;
+                default:
+                    outData = firstByte;
+                    break;
+            }
+
+            tickPos += outData;
             byte eventType = data.ReadByte(ref pos);
             byte eventLength = data.ReadByte(ref pos);
 
             eventSpanOut = data.Slice(pos, eventLength);
             pos += eventLength;
-            return (tickPos, eventType);
+            return eventType;
         }
 
         public static (uint version, uint instrumentCount) ReadHeader(Span<byte> data, Song song)
@@ -88,10 +102,10 @@ namespace MoonscraperChartEditor.Song.IO
         {
             int pos = 0;
             uint eventCount = data.ReadUInt32LE(ref pos);
+            uint tickPos = 0;
             for (int i = 0; i < eventCount; ++i)
             {
-
-                (uint tickPos, byte eventType) = ReadEventBytes(data, ref pos, out Span<byte> dataSpan);
+                byte eventType = ReadEventBytes(data, ref pos, out Span<byte> dataSpan, ref tickPos);
 
                 switch (eventType)
                 {
@@ -110,10 +124,11 @@ namespace MoonscraperChartEditor.Song.IO
         {
             int pos = 0;
             uint eventCount = data.ReadUInt32LE(ref pos);
+            uint tickPos = 0;
             for (int i = 0; i < eventCount; ++i)
             {
 
-                (uint tickPos, byte eventType) = ReadEventBytes(data, ref pos, out Span<byte> dataSpan);
+                byte eventType = ReadEventBytes(data, ref pos, out Span<byte> dataSpan, ref tickPos);
 
                 switch (eventType)
                 {
@@ -139,13 +154,14 @@ namespace MoonscraperChartEditor.Song.IO
         {
             int pos = 0;
             int eventCount = data.ReadInt32LE(ref pos);
-            Difficulty diff = (Difficulty)data.ReadByte(ref pos);
+            Difficulty diff = BChartUtils.BChartToMoonDiff(data.ReadByte(ref pos));
             List<ChartEvent> soloEndEvents = new List<ChartEvent>();
             Console.WriteLine($"{inst} {diff}");
             var chart = song.GetChart(inst, diff);
+            uint tickPos = 0;
             for (int i = 0; i < eventCount; ++i)
             {
-                (uint tickPos, byte eventType) = ReadEventBytes(data, ref pos, out Span<byte> dataSpan);
+                byte eventType = ReadEventBytes(data, ref pos, out Span<byte> dataSpan, ref tickPos);
 
 
                 for (int j = 0; j < soloEndEvents.Count; ++j)

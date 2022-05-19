@@ -55,15 +55,49 @@ namespace MoonscraperChartEditor.Song.IO
             int estCharCount = Encoding.UTF8.GetByteCount(chars);
             byte[] bytes = ArrayPool<byte>.Shared.Rent(estCharCount);
             Span<byte> outSpan = bytes;
-            Encoding.UTF8.GetBytes(chars, outSpan);
-            spanOut = outSpan;
+            var count = Encoding.UTF8.GetBytes(chars, outSpan);
+            spanOut = outSpan.Slice(0, count);
             return bytes;
+        }
+
+        /// <summary>
+        /// Convert internal difficulty enum to bchart format id
+        /// </summary>
+        /// <param name="difficulty"></param>
+        /// <returns>bchart difficulty byte id</returns>
+        public static byte MoonDiffToBChart(Difficulty difficulty)
+        {
+            return difficulty switch
+            {
+                Difficulty.Easy => BChartConsts.DIFFICULTY_EASY,
+                Difficulty.Medium => BChartConsts.DIFFICULTY_MEDIUM,
+                Difficulty.Hard => BChartConsts.DIFFICULTY_HARD,
+                Difficulty.Expert => BChartConsts.DIFFICULTY_EXPERT,
+                _ => BChartConsts.DIFFICULTY_EXPERT,
+            };
+        }
+
+        public static Difficulty BChartToMoonDiff(byte difficulty)
+        {
+            switch (difficulty)
+            {
+                case BChartConsts.DIFFICULTY_EASY:
+                    return Difficulty.Easy;
+                case BChartConsts.DIFFICULTY_MEDIUM:
+                    return Difficulty.Medium;
+                case BChartConsts.DIFFICULTY_HARD:
+                    return Difficulty.Hard;
+                case BChartConsts.DIFFICULTY_EXPERT:
+                    return Difficulty.Expert;
+                default:
+                    return Difficulty.Expert;
+            }
         }
 
         /// <summary>
         /// Convert Internal instrument track id to the bchart format id
         /// </summary>
-        /// <param name="instrument"></param>
+        /// <param name="instrument">Moonscraper instrument enum</param>
         /// <returns>BChart output instrument id</returns>
         public static uint MoonInstrumentToBChart(Instrument instrument)
         {
@@ -273,6 +307,14 @@ namespace MoonscraperChartEditor.Song.IO
             {
                 modifiers |= BChartConsts.SixFretGuitarNotes.NOTE_MOD_FORCE_STRUM;
             }
+            if (note.forcedHopo)
+            {
+                modifiers |= BChartConsts.SixFretGuitarNotes.NOTE_MOD_FORCE_HOPO;
+            }
+            if (note.forcedStrum)
+            {
+                modifiers |= BChartConsts.SixFretGuitarNotes.NOTE_MOD_FORCE_STRUM;
+            }
             if (note.type == Note.NoteType.Tap)
             {
                 modifiers |= BChartConsts.SixFretGuitarNotes.NOTE_MOD_TAP;
@@ -284,6 +326,14 @@ namespace MoonscraperChartEditor.Song.IO
         {
             uint modifiers = 0;
             if (note.forced)
+            {
+                modifiers |= BChartConsts.GuitarNotes.NOTE_MOD_TOGGLE_FORCED;
+            }
+            if (note.forcedHopo)
+            {
+                modifiers |= BChartConsts.GuitarNotes.NOTE_MOD_FORCE_HOPO;
+            }
+            if (note.forcedStrum)
             {
                 modifiers |= BChartConsts.GuitarNotes.NOTE_MOD_FORCE_STRUM;
             }
@@ -340,25 +390,41 @@ namespace MoonscraperChartEditor.Song.IO
 
         private static void ModToSixFretNote(Note note, uint modifiers)
         {
+            if ((modifiers & BChartConsts.SixFretGuitarNotes.NOTE_MOD_TOGGLE_FORCED) != 0)
+            {
+                note.flags |= Note.Flags.Forced;
+            }
             if ((modifiers & BChartConsts.SixFretGuitarNotes.NOTE_MOD_FORCE_STRUM) != 0)
             {
-                note.flags &= Note.Flags.Forced;
+                note.flags |= Note.Flags.ForceStrum;
+            }
+            if ((modifiers & BChartConsts.SixFretGuitarNotes.NOTE_MOD_FORCE_HOPO) != 0)
+            {
+                note.flags |= Note.Flags.ForceHopo;
             }
             if ((modifiers & BChartConsts.SixFretGuitarNotes.NOTE_MOD_TAP) != 0)
             {
-                note.flags &= Note.Flags.Tap;
+                note.flags |= Note.Flags.Tap;
             }
         }
 
         private static void ModToGuitarNote(Note note, uint modifiers)
         {
+            if ((modifiers & BChartConsts.GuitarNotes.NOTE_MOD_TOGGLE_FORCED) != 0)
+            {
+                note.flags |= Note.Flags.Forced;
+            }
             if ((modifiers & BChartConsts.GuitarNotes.NOTE_MOD_FORCE_STRUM) != 0)
             {
-                note.flags &= Note.Flags.Forced;
+                note.flags |= Note.Flags.ForceStrum;
+            }
+            if ((modifiers & BChartConsts.GuitarNotes.NOTE_MOD_FORCE_HOPO) != 0)
+            {
+                note.flags |= Note.Flags.ForceHopo;
             }
             if ((modifiers & BChartConsts.GuitarNotes.NOTE_MOD_TAP) != 0)
             {
-                note.flags &= Note.Flags.Tap;
+                note.flags |= Note.Flags.Tap;
             }
         }
 
@@ -366,19 +432,19 @@ namespace MoonscraperChartEditor.Song.IO
         {
             if ((modifiers & BChartConsts.DrumNotes.NOTE_MOD_ACCENT) != 0)
             {
-                note.flags &= Note.Flags.ProDrums_Accent;
+                note.flags |= Note.Flags.ProDrums_Accent;
             }
             if ((modifiers & BChartConsts.DrumNotes.NOTE_MOD_GHOST) != 0)
             {
-                note.flags &= Note.Flags.ProDrums_Ghost;
+                note.flags |= Note.Flags.ProDrums_Ghost;
             }
             if ((modifiers & BChartConsts.DrumNotes.NOTE_MOD_CYMBAL) != 0)
             {
-                note.flags &= Note.Flags.ProDrums_Cymbal;
+                note.flags |= Note.Flags.ProDrums_Cymbal;
             }
             if ((modifiers & BChartConsts.DrumNotes.NOTE_MOD_KICK_2) != 0)
             {
-                note.flags &= Note.Flags.DoubleKick;
+                note.flags |= Note.Flags.DoubleKick;
             }
         }
 
